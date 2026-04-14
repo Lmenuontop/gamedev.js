@@ -29,7 +29,7 @@ export class Game extends Scene {
         this.player = this.physics.add.sprite(512, 384, 'drone');
         this.player.setScale(0.5); 
         this.player.setCollideWorldBounds(true);
-        const hitboxradius = 40;
+        const hitboxradius = 50;
         this.player.body.setCircle(hitboxradius, (this.player.width / 2 ) - hitboxradius, (this.player.height / 2) - hitboxradius);
         this.player.canShoot = true;
         this.scraps = this.physics.add.group();
@@ -68,12 +68,24 @@ export class Game extends Scene {
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                const glitches = [0.5, 3, 1.5, 3.5, -0.5, -1.5];
+                // Difficulty Ramping: Add harder glitches based on score
+                let glitches = [0.5, 3, 1.5, 3.5, -0.5, -1.5];
+                if (this.score > 10) glitches.push(-2.5, 6);
+                if (this.score > 20) glitches.push(-4, 10);
+
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
-                
                 
                 this.player.setTint(this.speedMultiplier > 2 ? 0xff0000 : 0xffffff);
                 console.log("Current Speed Multiplier:", this.speedMultiplier);
+
+                // Pulse Gimmick: Visual expansion when glitching
+                this.tweens.add({
+                    targets: this.player,
+                    scale: this.player.scale * 1.2,
+                    duration: 100,
+                    yoyo: true
+                });
+
                 if (this.speedMultiplier > 2) {
                     this.statusText.setText("SYSTEM: OVERCLOCKED");
                     this.beepsound.play();
@@ -98,7 +110,7 @@ export class Game extends Scene {
             },
             loop: true
         }),
-        this.time.addEvent({
+        this.enemyTimer = this.time.addEvent({
             delay: 5000,
             callback: () => {
                 const x = (this.player.x < 500) ? 800 : 100;
@@ -110,19 +122,14 @@ export class Game extends Scene {
                     
                     enemy.setBounce(1);
                     enemy.setCollideWorldBounds(true);
-                    enemy.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(-200, 200));
+                    // Difficulty Ramping: Increase enemy speed with score
+                    const extraSpeed = Math.min(this.score * 5, 300);
+                    enemy.setVelocity(Phaser.Math.Between(-200 - extraSpeed, 200 + extraSpeed), Phaser.Math.Between(-200 - extraSpeed, 200 + extraSpeed));
                 }
             },
             loop: true,
         });
 
-        //this.physics.add.collider(this.player, this.enemies, (player, enemy) => {
-            
-            //this.scene.restart();
-            //this.speedMultiplier = 1;
-            //this.score = 0;
-          //  this.statusText.setText("SYSTEM: FAILURE");
-        //}, null, null);
         this.physics.add.overlap(this.player, this.scraps, (player, scrap) => {
             scrap.destroy();
             this.scrapsound.play();
@@ -130,6 +137,11 @@ export class Game extends Scene {
             console.log("scrap ++");
             this.score += 1;
             this.scoreText.setText("Scrap: " + this.score); 
+
+            // Difficulty Ramping: Faster Spawning every 5 scrap
+            if (this.score % 5 === 0 && this.enemyTimer.delay > 1000) {
+                this.enemyTimer.delay -= 500;
+            }
         }, null, null);
         
         this.physics.add.overlap(this.enemies, this.trailGroup, (enemy, ghost) => {
@@ -167,7 +179,7 @@ export class Game extends Scene {
     this.isGameOver = true;
     this.physics.pause(); 
     this.musicsound.stop();
-    this.diesound.play();
+    this.diesound.play({volume: 1.5});
     const screenCenter = { x: 512, y: 384 };
     this.statusText.setText("SYSTEM: FAILURE");
     this.add.text(screenCenter.x, screenCenter.y - 50, 'SYSTEM FAILURE', {
@@ -189,14 +201,17 @@ export class Game extends Scene {
     });
 }
     spawnTrailGhost() {
+    const ghost = this.trailGroup.create(this.player.x, this.player.y, "drone");
     
-    const ghost = this.trailGroup.create(this.player.x+10, this.player.y+10, "drone");
-    const radius = (ghost.width * 0.2);
-    ghost.body.setCircle(radius, (ghost.width / 2) - radius, (ghost.height / 2) - radius);
+    // LAYER FIX: 
     ghost.setDepth(1);
+    this.player.setDepth(10); 
     ghost.setScale(this.player.scale);
     ghost.setAlpha(0.5); 
     ghost.setTint(0x00ffff);
+    const radius = (ghost.width * 0.2);
+    ghost.body.setCircle(radius, (ghost.width / 2) - radius, (ghost.height / 2) - radius);
+
     this.tweens.add({
         targets: ghost,
         alpha: 0,
@@ -206,5 +221,6 @@ export class Game extends Scene {
         }
     });
 }
-}
 
+
+}
