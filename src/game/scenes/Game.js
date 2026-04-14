@@ -24,6 +24,7 @@ export class Game extends Scene {
         this.player = this.physics.add.sprite(512, 384, 'drone');
         this.player.setScale(0.5); 
         this.player.setCollideWorldBounds(true);
+        this.player.body.setCircle(this.player.width * 0.4);
         this.player.canShoot = true;
         this.scraps = this.physics.add.group();
         this.enemies = this.physics.add.group();
@@ -53,7 +54,7 @@ export class Game extends Scene {
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                const glitches = [0.5, 3, 1.5, 5, -0.5];
+                const glitches = [0.5, 3, 1.5, 4, -0.5];
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
                 
                 
@@ -86,6 +87,7 @@ export class Game extends Scene {
             callback: () => {
                 const x = (this.player.x < 500) ? 800 : 100;
                 const enemy = this.enemies.create(x, 100, 'enemy').setScale(0.3);
+                enemy.body.setCircle(this.enemy.width * 0.4);
                 //enemy.setTint(0xff0000); //red
                 enemy.setBounce(1);
                 enemy.setCollideWorldBounds(true);
@@ -131,7 +133,8 @@ export class Game extends Scene {
             this.player.setVelocityY(baseSpeed * this.speedMultiplier);
         }
         this.trailTimer++;
-        if (this.trailTimer % 5 == 0) {
+        const isMoving = this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0;
+        if (isMoving && this.trailTimer % 5 == 0) {
             this.spawnTrailGhost();
         }
     }
@@ -162,7 +165,7 @@ export class Game extends Scene {
 }
     spawnTrailGhost() {
     
-    const ghost = this.trailGroup.create(this.player.x, this.player.y, "drone");
+    const ghost = this.trailGroup.create(this.player.x+10, this.player.y+10, "drone");
     ghost.setScale(this.player.scale);
     ghost.setAlpha(0.5); 
     ghost.setTint(0x00ffff);
