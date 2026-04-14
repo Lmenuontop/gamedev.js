@@ -13,7 +13,7 @@ export class Game extends Scene {
         this.load.image('background', 'bg.png');
         this.load.image('drone', 'logo.png'); 
         this.load.image('scrap', 'scrap.jpeg');
-        this.load.image('enemy', 'enemy.jpeg');
+        this.load.image('enemy', 'enemy.png');
     }
 
     create() {
@@ -57,8 +57,8 @@ export class Game extends Scene {
             delay: 5000,
             callback: () => {
                 const x = (this.player.x < 500) ? 800 : 100;
-                const enemy = this.enemies.create(x, 100, 'enemy').setScale(0.4);
-                enemy.setTint(0xff0000); //red
+                const enemy = this.enemies.create(x, 100, 'enemy').setScale(0.3);
+                //enemy.setTint(0xff0000); //red
                 enemy.setBounce(1);
                 enemy.setCollideWorldBounds(true);
                 enemy.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(-200, 200));
