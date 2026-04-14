@@ -68,7 +68,7 @@ export class Game extends Scene {
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                const glitches = [0.5, 3, 1.5, 3.5, -0.5];
+                const glitches = [0.5, 3, 1.5, 3.5, -0.5, -1.5];
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
                 
                 
