@@ -24,7 +24,8 @@ export class Game extends Scene {
         this.player = this.physics.add.sprite(512, 384, 'drone');
         this.player.setScale(0.5); 
         this.player.setCollideWorldBounds(true);
-        this.player.body.setCircle(this.player.width * 0.4);
+        const hitboxradius = 40;
+        this.player.body.setCircle(hitboxradius, (this.player.width / 2 ) - hitboxradius, (this.player.height / 2) - hitboxradius);
         this.player.canShoot = true;
         this.scraps = this.physics.add.group();
         this.enemies = this.physics.add.group();
@@ -54,7 +55,7 @@ export class Game extends Scene {
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                const glitches = [0.5, 3, 1.5, 4, -0.5];
+                const glitches = [0.5, 3, 1.5, 3.5, -0.5];
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
                 
                 
@@ -87,14 +88,19 @@ export class Game extends Scene {
             callback: () => {
                 const x = (this.player.x < 500) ? 800 : 100;
                 const enemy = this.enemies.create(x, 100, 'enemy').setScale(0.3);
-                enemy.body.setCircle(this.enemy.width * 0.4);
-                //enemy.setTint(0xff0000); //red
-                enemy.setBounce(1);
-                enemy.setCollideWorldBounds(true);
-                enemy.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(-200, 200));
+                
+                if (enemy) {
+                    // FIX: Use 'enemy' instead of 'this.enemy'
+                    enemy.body.setCircle(enemy.width * 0.4); 
+                    
+                    enemy.setBounce(1);
+                    enemy.setCollideWorldBounds(true);
+                    enemy.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(-200, 200));
+                }
             },
             loop: true,
         });
+
         //this.physics.add.collider(this.player, this.enemies, (player, enemy) => {
             
             //this.scene.restart();
@@ -166,6 +172,9 @@ export class Game extends Scene {
     spawnTrailGhost() {
     
     const ghost = this.trailGroup.create(this.player.x+10, this.player.y+10, "drone");
+    const radius = (ghost.width * 0.2);
+    ghost.body.setCircle(radius, (ghost.width / 2) - radius, (ghost.height / 2) - radius);
+    ghost.setDepth(1);
     ghost.setScale(this.player.scale);
     ghost.setAlpha(0.5); 
     ghost.setTint(0x00ffff);
