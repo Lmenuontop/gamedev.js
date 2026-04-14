@@ -14,8 +14,8 @@ export class Game extends Scene {
         this.load.image('drone', 'logo.png'); 
         this.load.image('scrap', 'scrap.jpeg');
         this.load.image('enemy', 'enemy.png');
-        this.load.audio("diesfx", "die.mp3");
-        this.load.audio("scrapsfx", "scrap.mp3");
+        this.load.audio("diesfx", "die.wav");
+        this.load.audio("scrapsfx", "scrap.wav");
         this.load.audio("music", "music.mp3");
     }
 
@@ -53,7 +53,7 @@ export class Game extends Scene {
         
         this.diesound = this.sound.add("diesfx");
         this.scrapsound = this.sound.add("scrapsfx");
-        this.musicsound = this.sound.add("music", {loop: true, volume: 0.5});
+        this.musicsound = this.sound.add("music", {loop: true, volume: 0.9});
         this.input.once("pointerdown", () => {
             if (!this.musicsound.isPlaying) { this.musicsound.play() }
         });
