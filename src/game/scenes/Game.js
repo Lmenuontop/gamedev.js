@@ -14,6 +14,9 @@ export class Game extends Scene {
         this.load.image('drone', 'logo.png'); 
         this.load.image('scrap', 'scrap.jpeg');
         this.load.image('enemy', 'enemy.png');
+        this.load.audio("diesfx", "die.mp3");
+        this.load.audio("scrapsfx", "scrap.mp3");
+        this.load.audio("music", "music.mp3");
     }
 
     create() {
@@ -47,7 +50,13 @@ export class Game extends Scene {
             backgroundColor: "#000",
             padding: { x: 10, y: 5 }
         }).setOrigin(0.5);
-
+        
+        this.diesound = this.sound.add("diesfx");
+        this.scrapsound = this.sound.add("scrapsfx");
+        this.musicsound = this.sound.add("music", {loop: true, volume: 0.5});
+        this.input.once("pointerdown", () => {
+            if (!this.musicsound.isPlaying) { this.musicsound.play() }
+        });
 
         this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -110,6 +119,7 @@ export class Game extends Scene {
         //}, null, null);
         this.physics.add.overlap(this.player, this.scraps, (player, scrap) => {
             scrap.destroy();
+            this.scrapsound.play();
             player.setScale(player.scale + 0.01);
             console.log("scrap ++");
             this.score += 1;
@@ -118,6 +128,7 @@ export class Game extends Scene {
         
         this.physics.add.overlap(this.enemies, this.trailGroup, (enemy, ghost) => {
             enemy.destroy(); 
+            
         }, null, this);
     }
 
@@ -149,6 +160,8 @@ export class Game extends Scene {
 
     this.isGameOver = true;
     this.physics.pause(); 
+    this.musicsound.stop();
+    this.diesound.play();
     const screenCenter = { x: 512, y: 384 };
     this.statusText.setText("SYSTEM: FAILURE");
     this.add.text(screenCenter.x, screenCenter.y - 50, 'SYSTEM FAILURE', {
