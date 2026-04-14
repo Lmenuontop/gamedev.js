@@ -17,29 +17,53 @@ export class Game extends Scene {
     }
 
     create() {
-        // 1. Background (Fixed the floating text)
+        // Background 
         this.add.image(512, 384, 'background');
 
-        // 2. Player
+        //  Player
         this.player = this.physics.add.sprite(512, 384, 'drone');
         this.player.setScale(0.5); 
         this.player.setCollideWorldBounds(true);
         this.player.canShoot = true;
         this.scraps = this.physics.add.group();
         this.enemies = this.physics.add.group();
+        this.score = 0;
+        this.scoreText = this.add.text(16,16,"Scrap: 0", {
+            fontSize: "32px",
+            fill: "#00ff00",
+            backgroundColor: "#000",
+            padding: { x: 10, y: 5 },
+            
+        });
+        this.statusText = this.add.text(512, 50, "SYSTEM: STABLE", {
+            fontSize: "24px",
+            fill: "#00ff00",
+            backgroundColor: "#000",
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5);
+
 
         this.cursors = this.input.keyboard.createCursorKeys();
 
-        // 4. Glitch Loop
+        // glitch effect
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                const glitches = [0.5, 3, 1.5, 8];
+                const glitches = [0.5, 3, 1.5, 8, -0.5];
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
                 
                 
                 this.player.setTint(this.speedMultiplier > 2 ? 0xff0000 : 0xffffff);
                 console.log("Current Speed Multiplier:", this.speedMultiplier);
+                if (this.speedMultiplier > 2) {
+                    this.statusText.setText("SYSTEM: OVERCLOCKED");
+                }
+                else if (this.speedMultiplier < 0) {
+                    this.statusText.setText("SYSTEM: REVERSED");
+                }
+                else {
+                    this.statusText.setText("SYSTEM: STABLE");
+                }
             },
             loop: true
         });
@@ -66,14 +90,19 @@ export class Game extends Scene {
             loop: true,
         });
         this.physics.add.collider(this.player, this.enemies, (player, enemy) => {
+            
             this.scene.restart();
             this.speedMultiplier = 1;
+            this.score = 0;
         }, null, null);
         this.physics.add.overlap(this.player, this.scraps, (player, scrap) => {
             scrap.destroy();
             player.setScale(player.scale + 0.01);
             console.log("scrap ++");
+            this.score += 1;
+            this.scoreText.setText("Scrap: " + this.score); 
         }, null, null);
+        
     }
 
     update() {
