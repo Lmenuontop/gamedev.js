@@ -27,7 +27,11 @@ export class Game extends Scene {
         this.player.canShoot = true;
         this.scraps = this.physics.add.group();
         this.enemies = this.physics.add.group();
+        this.gameOver = false;
+        this.physics.add.collider(this.player, this.enemies, this.handleGameOver, null, this);
         this.score = 0;
+        this.trailGroup = this.physics.add.group();
+        this.trailTimer = 1;
         this.scoreText = this.add.text(16,16,"Scrap: 0", {
             fontSize: "32px",
             fill: "#00ff00",
@@ -49,7 +53,7 @@ export class Game extends Scene {
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                const glitches = [0.5, 3, 1.5, 8, -0.5];
+                const glitches = [0.5, 3, 1.5, 5, -0.5];
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
                 
                 
@@ -89,12 +93,13 @@ export class Game extends Scene {
             },
             loop: true,
         });
-        this.physics.add.collider(this.player, this.enemies, (player, enemy) => {
+        //this.physics.add.collider(this.player, this.enemies, (player, enemy) => {
             
-            this.scene.restart();
-            this.speedMultiplier = 1;
-            this.score = 0;
-        }, null, null);
+            //this.scene.restart();
+            //this.speedMultiplier = 1;
+            //this.score = 0;
+          //  this.statusText.setText("SYSTEM: FAILURE");
+        //}, null, null);
         this.physics.add.overlap(this.player, this.scraps, (player, scrap) => {
             scrap.destroy();
             player.setScale(player.scale + 0.01);
@@ -103,6 +108,9 @@ export class Game extends Scene {
             this.scoreText.setText("Scrap: " + this.score); 
         }, null, null);
         
+        this.physics.add.overlap(this.enemies, this.trailGroup, (enemy, ghost) => {
+            enemy.destroy(); 
+        }, null, this);
     }
 
     update() {
@@ -122,5 +130,50 @@ export class Game extends Scene {
         } else if (this.cursors.down.isDown) {
             this.player.setVelocityY(baseSpeed * this.speedMultiplier);
         }
+        this.trailTimer++;
+        if (this.trailTimer % 5 == 0) {
+            this.spawnTrailGhost();
+        }
     }
+    handleGameOver() {
+    if (this.isGameOver) return; 
+
+    this.isGameOver = true;
+    this.physics.pause(); 
+    const screenCenter = { x: 512, y: 384 };
+    this.statusText.setText("SYSTEM: FAILURE");
+    this.add.text(screenCenter.x, screenCenter.y - 50, 'SYSTEM FAILURE', {
+        fontSize: '64px',
+        fill: '#ff0000',
+        fontFamily: 'Arial Black'
+    }).setOrigin(0.5);
+    this.time.removeAllEvents();
+    this.player.setTint(0xff0000); 
+    this.add.text(screenCenter.x, screenCenter.y + 50, 'Click to Reboot', {
+        fontSize: '32px',
+        fill: '#ffffff'
+    }).setOrigin(0.5);
+
+    // Wait for click to restart
+    this.input.once('pointerdown', () => {
+        this.scene.restart();
+        this.isGameOver = false;
+    });
 }
+    spawnTrailGhost() {
+    
+    const ghost = this.trailGroup.create(this.player.x, this.player.y, "drone");
+    ghost.setScale(this.player.scale);
+    ghost.setAlpha(0.5); 
+    ghost.setTint(0x00ffff);
+    this.tweens.add({
+        targets: ghost,
+        alpha: 0,
+        duration: 1000, 
+        onComplete: () => {
+            ghost.destroy();
+        }
+    });
+}
+}
+
