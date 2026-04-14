@@ -17,6 +17,8 @@ export class Game extends Scene {
         this.load.audio("diesfx", "die.wav");
         this.load.audio("scrapsfx", "scrap.wav");
         this.load.audio("music", "music.mp3");
+        this.load.audio("beep", "beep.wav");
+        this.load.audio("beep2", "beep2.wav");
     }
 
     create() {
@@ -54,6 +56,8 @@ export class Game extends Scene {
         this.diesound = this.sound.add("diesfx");
         this.scrapsound = this.sound.add("scrapsfx");
         this.musicsound = this.sound.add("music", {loop: true, volume: 0.9});
+        this.beepsound = this.sound.add("beep");
+        this.beep2sound = this.sound.add("beep2");
         this.input.once("pointerdown", () => {
             if (!this.musicsound.isPlaying) { this.musicsound.play() }
         });
@@ -72,9 +76,11 @@ export class Game extends Scene {
                 console.log("Current Speed Multiplier:", this.speedMultiplier);
                 if (this.speedMultiplier > 2) {
                     this.statusText.setText("SYSTEM: OVERCLOCKED");
+                    this.beepsound.play();
                 }
                 else if (this.speedMultiplier < 0) {
                     this.statusText.setText("SYSTEM: REVERSED");
+                    this.beep2sound.play();
                 }
                 else {
                     this.statusText.setText("SYSTEM: STABLE");
