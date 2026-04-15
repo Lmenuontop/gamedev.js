@@ -5,6 +5,7 @@ export class Game extends Scene {
     constructor() {
         super('Game');
         this.speedMultiplier = 1; 
+        this.isLeaking = false;
     }
 
     preload() {
@@ -63,40 +64,57 @@ export class Game extends Scene {
         });
 
         this.cursors = this.input.keyboard.createCursorKeys();
-
-        // glitch effect
+        //glitch stuff
         this.time.addEvent({
             delay: 4000,
             callback: () => {
-                // Difficulty Ramping: Add harder glitches based on score
                 let glitches = [0.5, 3, 1.5, 3.5, -0.5, -1.5];
                 if (this.score > 10) glitches.push(-2.5, 6);
                 if (this.score > 20) glitches.push(-4, 10);
 
                 this.speedMultiplier = Phaser.Utils.Array.GetRandom(glitches);
+                this.glitchCount = 1;
+                this.glitchCount++;
                 
-                this.player.setTint(this.speedMultiplier > 2 ? 0xff0000 : 0xffffff);
-                console.log("Current Speed Multiplier:", this.speedMultiplier);
-
-                // Pulse Gimmick: Visual expansion when glitching
+                this.isLeaking = Math.random() < 0.2;
+                if (this.glitchCount >= 5 || Math.random() < 0.3) {
+                    this.isLeaking = true;
+                    this.glitchCount = 0;
+                } else {
+                    this.isLeaking = false;
+                }
                 this.tweens.add({
                     targets: this.player,
                     scale: this.player.scale * 1.2,
                     duration: 100,
                     yoyo: true
                 });
-
-                if (this.speedMultiplier > 2) {
+                if (this.isLeaking) {
+                    this.statusText.setText("SYSTEM: LOGIC LEAK");
+                    this.statusText.setFill("#ff0000");
+                    this.player.setTint(0xff0000);
+                    this.beep2sound.play();
+                    this.beepsound.play();
+                }
+                else if (this.speedMultiplier > 2) {
                     this.statusText.setText("SYSTEM: OVERCLOCKED");
+                    this.statusText.setFill("#00ff00");
+                    this.player.setTint(0xff0000);
                     this.beepsound.play();
                 }
                 else if (this.speedMultiplier < 0) {
                     this.statusText.setText("SYSTEM: REVERSED");
+                    this.statusText.setFill("#00ff00");
+                    this.player.setTint(0xffffff);
                     this.beep2sound.play();
                 }
                 else {
                     this.statusText.setText("SYSTEM: STABLE");
+                    this.statusText.setFill("#00ff00");
+                    this.player.setTint(0xffffff);
                 }
+                
+                console.log("Current Speed Multiplier:", this.speedMultiplier);
             },
             loop: true
         });
@@ -149,6 +167,8 @@ export class Game extends Scene {
     }
 
     update() {
+        if (this.isGameOver) return; 
+
         const baseSpeed = 300;
         
         this.player.setVelocity(0);
@@ -169,55 +189,81 @@ export class Game extends Scene {
         if (isMoving && this.trailTimer % 5 == 0) {
             this.spawnTrailGhost();
         }
-    }
-    handleGameOver() {
-    if (this.isGameOver) return; 
 
-    this.isGameOver = true;
-    this.physics.pause(); 
-    this.musicsound.stop();
-    this.diesound.play({volume: 1.5});
-    const screenCenter = { x: 512, y: 384 };
-    this.statusText.setText("SYSTEM: FAILURE");
-    this.add.text(screenCenter.x, screenCenter.y - 50, 'SYSTEM FAILURE', {
-        fontSize: '64px',
-        fill: '#ff0000',
-        fontFamily: 'Arial Black'
-    }).setOrigin(0.5);
-    this.time.removeAllEvents();
-    this.player.setTint(0xff0000); 
-    this.add.text(screenCenter.x, screenCenter.y + 50, 'Click to Reboot', {
-        fontSize: '32px',
-        fill: '#ffffff'
-    }).setOrigin(0.5);
-
-    // Wait for click to restart
-    this.input.once('pointerdown', () => {
-        this.scene.restart();
-        this.isGameOver = false;
-    });
-}
-    spawnTrailGhost() {
-    const ghost = this.trailGroup.create(this.player.x, this.player.y, "drone");
-    
-    // LAYER FIX: 
-    ghost.setDepth(1);
-    this.player.setDepth(10); 
-    ghost.setScale(this.player.scale);
-    ghost.setAlpha(0.5); 
-    ghost.setTint(0x00ffff);
-    const radius = (ghost.width * 0.2);
-    ghost.body.setCircle(radius, (ghost.width / 2) - radius, (ghost.height / 2) - radius);
-
-    this.tweens.add({
-        targets: ghost,
-        alpha: 0,
-        duration: 1000, 
-        onComplete: () => {
-            ghost.destroy();
+        if (this.isLeaking) {
+            this.physics.overlap(this.player, this.trailGroup, (player, ghost) => {
+                if (ghost.isHazard) {
+                    this.handleGameOver();
+                }
+            }, null, this);
         }
-    });
-}
+    }
 
+    handleGameOver() {
+        if (this.isGameOver) return; 
+
+        this.isGameOver = true;
+        this.physics.pause(); 
+        this.musicsound.stop();
+        this.diesound.play({volume: 1.5});
+        const screenCenter = { x: 512, y: 384 };
+        this.statusText.setText("SYSTEM: FAILURE");
+        this.add.text(screenCenter.x, screenCenter.y - 50, 'SYSTEM FAILURE', {
+            fontSize: '64px',
+            fill: '#ff0000',
+            fontFamily: 'Arial Black'
+        }).setOrigin(0.5);
+        this.time.removeAllEvents();
+        this.player.setTint(0xff0000); 
+        this.add.text(screenCenter.x, screenCenter.y + 50, 'Click to Reboot', {
+            fontSize: '32px',
+            fill: '#ffffff'
+        }).setOrigin(0.5);
+        this.add.text(screenCenter.x, screenCenter.y + 100, "ALERT: BLUE RESIDUAL LETHAL TO HOSTILE | RED RESIGUAL LETHAL TO CORE SYSTEM", {
+            fontSize: "16px",
+            fill: "#f72525"
+        }).setOrigin(0.5);
+        this.input.once('pointerdown', () => {
+            this.scene.restart();
+            this.isGameOver = false;
+            this.isLeaking = false;
+        });
+    }
+
+        spawnTrailGhost() {
+        const ghost = this.trailGroup.create(this.player.x, this.player.y, "drone");
+        
+        ghost.setDepth(1);
+        this.player.setDepth(10); 
+        ghost.setScale(this.player.scale);
+
+        if (this.isLeaking) {
+            ghost.setTint(0xff0000); 
+            ghost.isHazard = false; 
+            
+            this.time.delayedCall(500, () => {
+                if (ghost.active) ghost.isHazard = true;
+            });
+
+            ghost.setAlpha(0.8);
+            const radius = (ghost.width * 0.3); 
+            ghost.body.setCircle(radius, (ghost.width / 2) - radius, (ghost.height / 2) - radius);
+        } else {
+            ghost.setTint(0x00ffff);
+            ghost.isHazard = false;
+            ghost.setAlpha(0.5);
+            const radius = (ghost.width * 0.2);
+            ghost.body.setCircle(radius, (ghost.width / 2) - radius, (ghost.height / 2) - radius);
+        }
+
+        this.tweens.add({
+            targets: ghost,
+            alpha: 0,
+            duration: 1000, 
+            onComplete: () => {
+                ghost.destroy();
+            }
+        });
+    }
 
 }
