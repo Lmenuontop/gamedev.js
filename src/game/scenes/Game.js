@@ -117,12 +117,11 @@ export class Game extends Scene {
                 const enemy = this.enemies.create(x, 100, 'enemy').setScale(0.3);
                 
                 if (enemy) {
-                    // FIX: Use 'enemy' instead of 'this.enemy'
                     enemy.body.setCircle(enemy.width * 0.4); 
                     
                     enemy.setBounce(1);
                     enemy.setCollideWorldBounds(true);
-                    // Difficulty Ramping: Increase enemy speed with score
+                    
                     const extraSpeed = Math.min(this.score * 5, 300);
                     enemy.setVelocity(Phaser.Math.Between(-200 - extraSpeed, 200 + extraSpeed), Phaser.Math.Between(-200 - extraSpeed, 200 + extraSpeed));
                 }
@@ -138,7 +137,6 @@ export class Game extends Scene {
             this.score += 1;
             this.scoreText.setText("Scrap: " + this.score); 
 
-            // Difficulty Ramping: Faster Spawning every 5 scrap
             if (this.score % 5 === 0 && this.enemyTimer.delay > 1000) {
                 this.enemyTimer.delay -= 500;
             }
@@ -153,7 +151,6 @@ export class Game extends Scene {
     update() {
         const baseSpeed = 300;
         
-        // Reset velocity every frame
         this.player.setVelocity(0);
 
         if (this.cursors.left.isDown) {

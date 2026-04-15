@@ -1,4 +1,4 @@
-## readne ##
+## readme ##
 gamedev.js jam entry
 
 Music - who am i? by yawnice on nocopyrightsounds \
